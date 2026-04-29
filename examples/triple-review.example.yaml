@@ -1,0 +1,45 @@
+# triple-review CLI registry — modular multi-LLM dispatch.
+#
+# Each entry registers one CLI to dispatch in parallel. The orchestrator
+# clusters findings across all registered CLIs by `(file, severity, line ±2)`
+# and (with --falsify) asks each CLI to challenge each finding adversarially.
+#
+# Required fields:  name, cmd
+# Optional fields:  timeout_s (default 300)
+#
+# `cmd` is the argv prefix; the file content is piped to stdin and the
+# user's review prompt becomes the trailing positional arg. Whatever the
+# CLI emits to stdout is parsed for a JSON array of findings.
+#
+# Run with:
+#     triple-review --config triple-review.yaml file1.py file2.go ...
+clis:
+  # ── Bundled vendor CLIs (the original "triple") ────────────────────────
+  - name: claude
+    cmd: ["claude", "-p", "--output-format=text"]
+    timeout_s: 300
+
+  - name: gemini
+    cmd: ["gemini", "-p"]
+    timeout_s: 300
+
+  - name: copilot
+    cmd: ["copilot", "-p"]
+    timeout_s: 300
+
+  # ── Local LLM via Ollama (no network egress) ───────────────────────────
+  # - name: ollama-qwen-coder
+  #   cmd: ["ollama", "run", "qwen2.5-coder"]
+  #   timeout_s: 600
+
+  # ── Bring-your-own SDK shim ─────────────────────────────────────────────
+  # If a CLI doesn't follow the stdin/prompt convention, write a tiny shell
+  # wrapper that adapts your SDK call and emit a JSON array of findings.
+  # - name: internal-reviewer
+  #   cmd: ["./scripts/my-llm-review.sh"]
+  #   timeout_s: 240
+
+  # ── Mistral, Cohere, OpenAI, Grok, etc. via their CLIs ──────────────────
+  # - name: mistral
+  #   cmd: ["mistral", "chat", "--model", "codestral-latest", "-q"]
+  #   timeout_s: 240

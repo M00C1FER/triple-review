@@ -127,7 +127,16 @@ def _parse_findings(text: str, default_cli: str, default_file: str) -> List[Find
 
 
 def default_configs() -> List[ReviewConfig]:
-    """Default 3-CLI dispatch: claude / gemini / copilot via their CLI binaries."""
+    """Bundled 3-CLI preset: claude / gemini / copilot.
+
+    This is one valid configuration, not a hard requirement. The orchestrator
+    accepts any number of CLIs >= 1 — register them via:
+      • `triple-review --config my.yaml ...` (YAML file)
+      • `triple-review --cli name=cmd,arg,... ...` (repeatable inline flag)
+      • Programmatic: pass `configs=[ReviewConfig(...)]` to `run_review()`
+
+    See `examples/triple-review.example.yaml` for a multi-CLI YAML.
+    """
     return [
         ReviewConfig(cli="claude",  cmd=["claude",  "-p", "--output-format=text"], timeout_s=300),
         ReviewConfig(cli="gemini",  cmd=["gemini",  "-p"],                          timeout_s=300),
