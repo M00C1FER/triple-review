@@ -1,0 +1,74 @@
+name: 'triple-review'
+description: 'Run Claude + Gemini + Copilot code review in parallel with adversarial falsification gate'
+branding: { icon: 'check-square', color: 'blue' }
+
+inputs:
+  files:
+    description: 'Newline-separated list of files to review (default: changed files in PR)'
+    required: false
+  falsify:
+    description: 'Run the Sigma adversarial falsification gate'
+    required: false
+    default: 'true'
+  comment:
+    description: 'Post unanimous/majority survivors as PR comments'
+    required: false
+    default: 'true'
+  fail-on:
+    description: 'critical | high | medium | low | never (default: high)'
+    required: false
+    default: 'high'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with: { python-version: '3.12' }
+    - name: Install triple-review
+      shell: bash
+      run: pip install triple-review
+
+    - name: Resolve files
+      id: files
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.files }}" ]; then
+          echo "${{ inputs.files }}" > /tmp/triple-review-files.txt
+        else
+          git diff --name-only origin/${{ github.base_ref }}...HEAD > /tmp/triple-review-files.txt
+        fi
+        echo "count=$(wc -l < /tmp/triple-review-files.txt)" >> "$GITHUB_OUTPUT"
+
+    - name: Run review
+      shell: bash
+      run: |
+        FALSIFY_FLAG=""
+        [ "${{ inputs.falsify }}" = "true" ] && FALSIFY_FLAG="--falsify"
+        xargs -a /tmp/triple-review-files.txt triple-review $FALSIFY_FLAG --json > /tmp/triple-review.json
+
+    - name: Post PR comments
+      if: github.event_name == 'pull_request' && inputs.comment == 'true'
+      shell: bash
+      run: |
+        triple-review --falsify --pr-comments $(cat /tmp/triple-review-files.txt) > /tmp/comments.json
+        echo "TODO: gh api PR-comment loop using /tmp/comments.json"
+
+    - name: Fail-on threshold
+      shell: bash
+      run: |
+        python -c "
+        import json, sys
+        gate = json.load(open('/tmp/triple-review.json'))
+        order = ['critical','high','medium','low','info','never']
+        threshold = '${{ inputs.fail-on }}'
+        ti = order.index(threshold)
+        for entry in gate:
+            f = entry['finding']
+            if not entry['survived']:
+                continue
+            si = order.index(f['severity'])
+            if si <= ti and f['agreement'] in ('unanimous', 'majority'):
+                print(f'[FAIL] {f[\"agreement\"]}/{f[\"severity\"]} {f[\"file\"]}:{f[\"line\"]} {f[\"title\"]}')
+                sys.exit(1)
+        print('OK: no findings at or above ' + threshold)
+        "
