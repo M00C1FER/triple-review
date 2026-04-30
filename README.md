@@ -1,6 +1,8 @@
 # triple-review
 
-> **Modular** multi-LLM parallel code review with an adversarial **Sigma falsification gate** and GitHub Action. Register *any* CLI — Claude, Gemini, Copilot, Ollama, Mistral, your own SDK shim — via YAML or one-line flags. The orchestrator clusters findings by cross-CLI consensus, then asks each CLI to falsify each finding before it ships as a PR comment.
+> **Modular** multi-LLM parallel code review with an adversarial **Sigma falsification gate** and GitHub Action. Register *any* command-line LLM via YAML or one-line flags — the orchestrator is vendor-neutral and works with anything that takes a prompt and emits JSON-shaped findings. The orchestrator clusters findings by cross-CLI consensus, then asks each CLI to falsify each finding before it ships as a PR comment.
+>
+> _Examples in this README mention Claude / Gemini / Copilot / Ollama because those are the most common command-line LLMs at time of writing — they are illustrations, not requirements._
 
 [![CI](https://github.com/M00C1FER/triple-review/actions/workflows/ci.yml/badge.svg)](https://github.com/M00C1FER/triple-review/actions)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
@@ -8,17 +10,19 @@
 
 ## Why "triple"?
 
-Three is the typical consensus threshold (catch the bugs ≥2 reviewers flag, drop the ones only one notices). The bundled preset is Claude+Gemini+Copilot — but the orchestrator works with **any number of CLIs ≥ 1**, and you swap them via config.
+Three is the typical consensus threshold (catch the bugs ≥2 reviewers flag, drop the ones only one notices). The bundled preset *as an example* registers three popular vendor CLIs — but the orchestrator works with **any number of CLIs ≥ 1**, and you swap them via config.
 
-On the demo (`examples/broken-repo/auth.py`, 5 deliberate issues):
+On the demo (`examples/broken-repo/auth.py`, 5 deliberate issues, with three different command-line LLMs registered):
 
 | Reviewer | Caught |
 |---|:-:|
-| Claude alone   | 3/5 |
-| Gemini alone   | 4/5 |
-| Copilot alone  | 3/5 |
+| Reviewer A alone | 3/5 |
+| Reviewer B alone | 4/5 |
+| Reviewer C alone | 3/5 |
 | **3-CLI consensus**                  | **5/5** |
 | 3-CLI consensus + falsification gate | 5/5 (zero false positives) |
+
+Different vendors / different model versions catch different bugs; the consensus + falsification machinery is what matters, not which three vendors you point at it.
 
 The Sigma gate is the differentiator vs `mataanin/multi-llm`, `Maleick/peer-review`, and the GH Marketplace `LLM Code Reviewer`: every finding gets adversarially challenged before it ships as a PR comment.
 
