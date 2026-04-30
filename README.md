@@ -1,3 +1,9 @@
+> ⚠️ **DEPRECATED — superseded 2026-04-30 by [mesh-review](https://github.com/M00C1FER/mesh-review).**
+>
+> This repo was merged into `mesh-review`, which combines the review (consensus + Sigma falsification gate) and summary (PR description) capabilities behind a single shared CLI registry. One config, both subcommands.
+>
+> See the [mesh-review README](https://github.com/M00C1FER/mesh-review#readme) for migration guidance. The code below remains available for reference but is **no longer maintained** here.
+
 # triple-review
 
 > **Modular** multi-LLM parallel code review with an adversarial **Sigma falsification gate** and GitHub Action. Register *any* command-line LLM via YAML or one-line flags — the orchestrator is vendor-neutral and works with anything that takes a prompt and emits JSON-shaped findings. The orchestrator clusters findings by cross-CLI consensus, then asks each CLI to falsify each finding before it ships as a PR comment.
