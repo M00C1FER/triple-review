@@ -26,7 +26,7 @@ runs:
       with: { python-version: '3.12' }
     - name: Install triple-review
       shell: bash
-      run: pip install triple-review
+      run: pip install git+https://github.com/M00C1FER/triple-review.git
 
     - name: Resolve files
       id: files
@@ -63,11 +63,15 @@ runs:
         threshold = '${{ inputs.fail-on }}'
         ti = order.index(threshold)
         for entry in gate:
-            f = entry['finding']
-            if not entry['survived']:
+            # When --falsify was not used, output is consensus format (no 'survived' key).
+            # Treat everything as survived in that case so fail-on still works.
+            if not entry.get('survived', True):
                 continue
-            si = order.index(f['severity'])
-            if si <= ti and f['agreement'] in ('unanimous', 'majority'):
+            f = entry.get('finding', entry)
+            if f.get('agreement') not in ('unanimous', 'majority'):
+                continue
+            si = order.index(f.get('severity', 'info'))
+            if si <= ti:
                 print(f'[FAIL] {f[\"agreement\"]}/{f[\"severity\"]} {f[\"file\"]}:{f[\"line\"]} {f[\"title\"]}')
                 sys.exit(1)
         print('OK: no findings at or above ' + threshold)

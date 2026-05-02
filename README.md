@@ -1,8 +1,10 @@
 > ⚠️ **DEPRECATED — superseded 2026-04-30 by [mesh-review](https://github.com/M00C1FER/mesh-review).**
 >
-> This repo was merged into `mesh-review`, which combines the review (consensus + Sigma falsification gate) and summary (PR description) capabilities behind a single shared CLI registry. One config, both subcommands.
+> **Use [mesh-review](https://github.com/M00C1FER/mesh-review) going forward.** It combines the review (consensus + Sigma falsification gate) and summary (PR description) capabilities behind a single shared CLI registry — one config, both subcommands.
 >
-> See the [mesh-review README](https://github.com/M00C1FER/mesh-review#readme) for migration guidance. The code below remains available for reference but is **no longer maintained** here.
+> This repo **remains available for backwards compatibility** with existing `triple-review` integrations and for reference. It will not receive new features; bug fixes are best-effort only.
+>
+> See the [mesh-review README](https://github.com/M00C1FER/mesh-review#readme) for migration guidance. For a comparison of unique features retained here vs mesh-review, see [§ Unique features vs mesh-review](#unique-features-vs-mesh-review) below.
 
 # triple-review
 
@@ -180,6 +182,55 @@ triple-review --list-clis file.py
 | GH Marketplace LLM Code Reviewer | ❌ | ❌ | ✅ | ✅ | ❌ |
 | **`triple-review`**            | **✅** | **✅** | **✅** | **✅** | **✅** |
 
+## Unique features vs mesh-review
+
+`triple-review` and `mesh-review` share the same consensus + Sigma-gate core (merged 2026-04-30). Features identical in both are omitted below; only differences are listed.
+
+| Feature | `triple-review` | `mesh-review` |
+|---|:-:|:-:|
+| Consensus + Sigma gate | ✅ | ✅ |
+| PR-comment payloads | ✅ | ✅ |
+| GitHub Action | ✅ (this repo) | ✅ (mesh-review) |
+| PR-description / summary subcommand | ❌ | ✅ |
+| Shared CLI registry across subcommands | ❌ | ✅ |
+| `pip install triple-review` (PyPI, pending) | ✅ | see mesh-review |
+| Standalone single-package install | ✅ | see mesh-review |
+
+**Bottom line:** if you only need the consensus + gate review and have no existing `triple-review` config, migrate to `mesh-review`. If you already have a `triple-review.yaml` in CI, it continues to work here; migration is opt-in.
+
+## Cross-platform install
+
+### Linux / macOS (recommended)
+
+```bash
+pip install git+https://github.com/M00C1FER/triple-review.git
+# or use the interactive wizard:
+bash <(curl -fsSL https://raw.githubusercontent.com/M00C1FER/triple-review/main/install.sh)
+```
+
+### WSL2 (Ubuntu base)
+
+No special steps needed. The tool makes no `/sys/firmware/efi` or kernel-firmware assumptions. Install as above under the Ubuntu/Debian path in `install.sh`.
+
+### Termux (Android arm64)
+
+```bash
+pkg update && pkg install python git
+pip install git+https://github.com/M00C1FER/triple-review.git
+triple-review --list-clis dummy.py
+```
+
+> **Note:** `sudo` is not available in Termux. The installer wizard (`install.sh`) handles this automatically. Any LLM CLI that ships as a Python package or a self-contained binary works; vendor CLIs like `ollama` can be sideloaded via Termux's `pkg install` if packaged, or run as a remote endpoint.
+
+### Alpine (best-effort)
+
+```bash
+apk add python3 py3-pip git
+pip install git+https://github.com/M00C1FER/triple-review.git
+```
+
+> **glibc gap:** vendor CLI binaries that are glibc-only (e.g., some pre-built LLM CLI releases) may not run on Alpine (musl). Use Ollama or an SDK-shim wrapper instead.
+
 ## Testing
 
 ```bash
@@ -187,7 +238,7 @@ pip install -e .[dev]
 pytest
 ```
 
-7 tests cover parallel dispatch, cluster fingerprinting, severity-takes-worst, the Sigma gate (survives + falsified paths), and PR-comment rendering.
+20 tests cover parallel dispatch, cluster fingerprinting, severity-takes-worst, the Sigma gate (survives + falsified paths), PR-comment rendering, YAML config loading, and inline CLI parsing.
 
 ## License
 
